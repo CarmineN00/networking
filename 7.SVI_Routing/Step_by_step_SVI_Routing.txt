@@ -1,0 +1,52 @@
+Comandi utili:
+Switch#show ip interface brief (mi permette di vedere lo stato delle vlan e l'ip assegnato)
+Vlan10                 10.1.10.1       YES manual up                    up 
+Vlan20                 10.1.20.1       YES manual up                    up 
+Vlan30                 10.1.30.1       YES manual up                    up
+
+1) Abilitazione routing su Switch Layer3 (NECESSARIA SOLO PER ALCUNI SWITCH)
+Switch(config)#sdm prefer lanbase-routing 
+Switch#reload
+Switch(config)#ip routing (senza questo lo switch non popola la tabella di routing)
+
+2) Switched Virtual Interfaces Routing
+
+2.1) Creazione VLAN 10,20,30
+Switch(config)#int range f0/1 - 2
+Switch(config-if-range)#switchport mode access 
+Switch(config-if-range)#switchport access vlan 10
+Switch(config)#int range f0/3 - 4
+Switch(config-if-range)#switchport mode access
+Switch(config-if-range)#switchport access vlan 20
+Switch(config)#int g0/1
+Switch(config-if)#switchport mode access 
+Switch(config-if)#switchport access vlan 30
+
+2.2) Creazione SVI Interfaces
+Switch(config)#interface vlan 10
+Switch(config-if)#ip address 10.1.10.1 255.255.255.0
+Switch(config-if)#interface vlan 20
+Switch(config-if)#ip address 10.1.20.1 255.255.255.0
+Switch(config-if)#interface vlan 30
+Switch(config-if)#ip address 10.1.30.1 255.255.255.0
+
+3) Creazione pool dhcp su switch layer 3 (opzionale)
+Router(config)#ip dhcp pool VLAN10
+Router(dhcp-config)#network 10.1.10.0 255.255.255.0
+Router(dhcp-config)#default-router 10.1.10.1
+Router(dhcp-config)#dns-server 10.1.10.1
+Router(config)#ip dhcp pool VLAN20
+Router(dhcp-config)#network 10.1.20.0 255.255.255.0
+Router(dhcp-config)#default-router 10.1.20.1
+Router(dhcp-config)#dns-server 10.1.20.1
+ASSEGNAZIONE AUTOMATICA IP AGLI HOST IN VLAN 10 E VLAN 20
+
+A QUESTO PUNTO VLAN 10 E 20 COMUNICANO TRA LORO, VLAN 30 NO
+
+4) Creazione rotte statiche 
+Router(config)#ip route 10.1.10.0 255.255.255.0 g0/1
+Router(config)#ip route 10.1.20.0 255.255.255.0 g0/1
+
+A QUESTO PUNTO TUTTE LE VLAN COMUNICANO
+la non comunicazione tra vlan 30 e le altre era dovuta all'assenza di rotte per raggiungere
+quelle vlan

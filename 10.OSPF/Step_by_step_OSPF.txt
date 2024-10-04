@@ -1,0 +1,110 @@
+OSPF: Metodologia che non utilizza il comando network (no wildcard mask), ma ip opsf all'interno dell'interfaccia
+
+!R1 Config:
+
+en
+conf t
+hostname R1
+
+int g0/0
+ip address 192.168.12.1 255.255.255.0
+no sh
+
+int g0/1
+ip address 192.168.14.1 255.255.255.0
+no sh
+
+int g0/2
+ip address 192.168.1.1 255.255.255.0
+no sh
+
+router ospf 1 
+
+int g0/0
+ip ospf 1 area 0
+
+int g0/1
+ip ospf 1 area 0
+
+int g0/2
+ip ospf 1 area 0
+
+---------------------------------------------------------
+
+!R2 Config:
+
+en
+conf t
+hostname R2
+
+int g0/0
+ip address 192.168.12.2 255.255.255.0
+no sh
+
+int g0/1
+ip address 192.168.23.1 255.255.255.0
+no sh
+
+router ospf 1 
+
+int g0/0
+ip ospf 1 area 0
+
+int g0/1
+ip ospf 1 area 0
+
+---------------------------------------------------------
+
+
+!R3 Config:
+
+en
+conf t
+hostname R3
+
+int g0/0
+ip address 192.168.23.2 255.255.255.0
+no sh
+
+int g0/1
+ip address 192.168.34.1 255.255.255.0
+no sh
+
+int g0/2
+ip address 192.168.2.1 255.255.255.0
+no sh
+
+router ospf 1 
+
+int g0/0
+ip ospf 1 area 0
+
+int g0/1
+ip ospf 1 area 0
+
+int g0/2
+ip ospf 1 area 0
+
+---------------------------------------------------------
+
+!R4 Config:
+
+en
+conf t
+hostname R4
+
+int g0/0
+ip address 192.168.34.2 255.255.255.0
+no sh
+
+int g0/1
+ip address 192.168.14.2 255.255.255.0
+no sh
+
+router ospf 1 
+
+int g0/0
+ip ospf 1 area 0
+
+int g0/1
+ip ospf 1 area 0

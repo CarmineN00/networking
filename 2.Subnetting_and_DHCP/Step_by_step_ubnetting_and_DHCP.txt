@@ -1,0 +1,25 @@
+In questo lab, si vuole una suddivisione in due subnet a partire dall'indirizzo di rete 192.168.40.0.
+
+Siccome il numero di subnet è solo due, la subnet mask di cui abbiamo bisogno in notazione CIDR è /25 che in notazione decimale puntata equivale a 255.255.255.128
+
+In linea generale in base al numero di subnet che si vogliono a partire dall'indirizzo di rete di base, quello che si fa è porre i bit più significati della parte dell'host a 1.
+
+Esempio:
+Se voglio 2 subnet, allora dedico 1 bit della parte host alla parte di subnet -> 11111111.11111111.11111111.10000000 che equivale a 255.255.255.128.
+In questo modo posso avere due subnet e in ogni subnet ospitare 126 host.
+
+Se voglio 4 subnet allora dedicto 2 bit della parte host alla parte di subnet -> 11111111.11111111.11111111.11000000 che equivale a 255.255.255.192.
+In questo modo posso avere quattro subnet dove ognuna può ospitare 62 host.
+
+Da notare che in qualsiasi rete o sottorete due indirizzi sono esclusi poiché dedicati al default gateway e all'indirizzo di brodcast
+
+Cosa è stato fatto nel seguente lab:
+1)Divisione della rete in due subnet
+- Sull'interfaccia g0/1 del router ip 192.168.40.1 255.255.255.128
+- Sull'interfaccia g0/2 del router ip 192.168.40.129 255.255.255.128
+2)Abilitazione di due pool DHCP (ACCOUNT E DELIVERY):
+- network 192.168.40.0/25
+- dns server 8.8.8.8
+- default router in base alla subnet considerata 
+
+I dispositivi in ACCOUNTS sono in grado di comunicare con quelli di DELIVERY

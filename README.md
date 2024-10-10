@@ -23,6 +23,9 @@ Le tematiche affrontante nei progetti sono le seguenti:
   - Wireless LAN Controller
   - WEP, WPA/2/3 Personal/Enterprise
   - .1x authentication
+- Security
+  - Standard/Extendend ACL
+  - ASA Firewall
  
 È possibile inoltre trovare nella dir di ogni progetto un file esplicativo dei comandi utilizzati e di alcune considerazioni per comprendere al meglio la topologia.
 

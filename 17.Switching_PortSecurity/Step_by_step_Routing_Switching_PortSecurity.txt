@@ -1,0 +1,57 @@
+1) Configurazione router e pool DHCP
+Router(config)#int g0/1
+Router(config-if)#ip address 192.168.1.1 255.255.255.0
+Router(config-if)#no shut
+-
+Router(config)#ip dhcp pool DHCPOOL
+Router(dhcp-config)#network 192.168.1.0 255.255.255.0
+Router(dhcp-config)#default-router 192.168.1.1
+Router(dhcp-config)#dns-server 192.168.1.1
+Router(config)#ip dhcp excluded-address 192.168.1.1 192.168.1.100
+Router(config)#do wr
+
+2) Configurazione security-port
+Switch(config)#int range fa0/1 - 2
+Switch(config-if-range)#switchport mode access // per abilitare il port-security le porte devono essere in access
+Switch(config-if-range)#switchport port-security 
+Switch(config-if-range)#switchport port-security mac-address sticky 
+Switch(config-if-range)#switchport port-security violation shutdown // di default il port-security utilizza shutdown
+Siccome in questo caso non abbiamo specificato il numero di indirizzi MAC per porta accettati, sarà 1 (default).
+L'opzione sticky permette alla porta di capire automaticamente il MAC del dispositivo collegato.
+L'opzione shutdown fa si che in caso di violazione l'interfaccia vada in err-disabled, non permettendo 
+più la ricezione ed il forward dei pacchetti. Il counter non si basa sul numeri di frames che hanno violato
+ma il numero di volte in cui l'interfaccia è andata in err-disabled.
+-
+Switch(config)#int range fa0/3 - 4
+Switch(config-if-range)#switchport mode access 
+Switch(config-if-range)#switchport port-security 
+Switch(config-if-range)#switchport port-security maximum 2
+Switch(config-if-range)#switchport port-security mac-address sticky 
+Switch(config-if-range)#switchport port-security violation restrict 
+In questo caso il numero di indirizzi MAC da cui possono provenire i frames sono 2, e l'opzione restric fa si che anche in caso
+di violazione l'interfaccia non vada in err-disabled, cioè la ricezione e il forward dei pacchetti continuano. 
+Tutte le violazioni però vengono tracciate da un counter. Inoltre con questa modalità vengono emessi anche dei syslog.
+-
+Switch(config)#int fa0/5
+Switch(config-if)#switchport mode access 
+Switch(config-if)#switchport port-security 
+Switch(config-if)#switchport port-security mac-address 0030.F244.7135
+Switch(config-if)#switchport port-security violation protect 
+Su questa porta l'indirizzo MAC dal quale sono accettati i frames è impostato manualmente, mentre la modalità protect
+non fa nient'altro che bloccare i frames che violano la condizione. 
+
+Dunque le modalità PROTECT e RESTRICT permettono all'interfaccia di poter continuare a funzionare correttamente
+pur bloccando i frames, mentre la modalità SHUTDOWN alla prima violazione rende l'interfaccia non più funzionante 
+bloccando ricezione e invio.
+
+Switch#show port-security 
+Secure Port MaxSecureAddr CurrentAddr SecurityViolation Security Action
+               (Count)       (Count)        (Count)
+--------------------------------------------------------------------
+        Fa0/1        1          0                 0         Shutdown
+        Fa0/2        1          0                 0         Shutdown
+        Fa0/3        2          0                 0         Restrict
+        Fa0/4        2          0                 0         Restrict
+        Fa0/5        1          1                 0          Protect
+
+

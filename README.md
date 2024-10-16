@@ -27,6 +27,7 @@ Le tematiche affrontante nei progetti sono le seguenti:
   - Standard/Extendend ACL
   - ASA Firewall
   - Port-Security
+  - DHCP Snooping/DAI
  
 È possibile inoltre trovare nella dir di ogni progetto un file esplicativo dei comandi utilizzati e di alcune considerazioni per comprendere al meglio la topologia.
 

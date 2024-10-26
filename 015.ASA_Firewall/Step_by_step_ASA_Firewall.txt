@@ -1,0 +1,45 @@
+Nella seguente topologia abbiamo un firewall ASA centrale il cui scopo è quello di dividere diverse zone: INSIDE, DMZ, OUTSIDE
+
+1) Configurazione delle zone
+ciscoasa(config)#hostname ASA-FIREWALL
+ASA-FIREWALL(config)#enable password Carmine123
+ASA-FIREWALL(config)#username Carmine password Carmine123
+-
+ASA-FIREWALL(config)#int g1/1
+ASA-FIREWALL(config-if)#no sh
+ASA-FIREWALL(config-if)#ip address 192.168.10.1 255.255.255.0
+ASA-FIREWALL(config-if)#nameif INSIDE
+ASA-FIREWALL(config-if)#security-level 100
+-
+ASA-FIREWALL(config-if)#int g1/2
+ASA-FIREWALL(config-if)#no sh
+ASA-FIREWALL(config-if)#ip address 10.1.1.1 255.255.255.240
+ASA-FIREWALL(config-if)#nameif DMZ
+ASA-FIREWALL(config-if)#security-level 70
+-
+ASA-FIREWALL(config-if)#int g1/3
+ASA-FIREWALL(config-if)#no sh
+ASA-FIREWALL(config-if)#ip address 20.1.1.1 255.255.255.0
+ASA-FIREWALL(config-if)#nameif OUTSIDE
+ASA-FIREWALL(config-if)#security-level 0
+-
+ASA-FIREWALL(config)#wr mem
+
+2) Configurazione DHCP su ASAF per la zona INSIDE
+ASA-FIREWALL(config)#dhcpd address 192.168.10.101-192.168.10.200 INSIDE
+ASA-FIREWALL(config)#dhcpd dns 8.8.8.8
+ASA-FIREWALL(config)#dhcpd enable INSIDE
+ASA-FIREWALL(config)#wr mem
+-
+Abilitazione DHCP sui PC in INSIDE
+
+3) Configurazione autenticazione AAA mediante ssh
+ASA-FIREWALL(config)#aaa authentication ssh console LOCAL // verrà utilizzato l'user Carmine definito in locale sul FW
+ASA-FIREWALL(config)#crypto key generate rsa modulus 1024 // l'utilizzo di ssh per definizione richiede una coppia di chiavi pub,priv
+ASA-FIREWALL(config)#ssh 192.168.10.0 255.255.255.0 INSIDE // tutti gli host in INSIDE potranno connettersi tramite ssh al FW
+ASA-FIREWALL(config)#ssh timeout 3 // dopo 3 minuti di inattività la sessione viene chiusa
+ASA-FIREWALL(config)#wr mem
+
+
+
+

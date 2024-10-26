@@ -1,0 +1,33 @@
+L'indirizzo di rete è 192.168.1.0, il numero di subnets richieste è 3.
+Dunque l'indirizzo in notazione CIDR che andremo ad utilizzare per identificare la rete sarà 192.168.1.0/26
+
+Cosa è stato fatto:
+1 - Crazione VLAN 10
+- - int range fa0/1 - 3 (configurare nello stesso momento le tre interfacce )
+- - switchport mode access (settaggio delle interfacce a modalita access)
+- - switchport access vlan 10(assegnamento di queste tre porte dello switch alla vlan 10)
+La medesima operazione è stata svolta per la creazione delle altre VLAN
+
+2 - Interfaccia Gi0/1 che si collega al router messa in trunk mode
+
+3 - Creazione di sub interfaces sulla porta Gi0/1 del router
+- - int g0/1.10 (creazione sub interface per vlan 10)
+- - encapsulation dot1Q 10 (specifica della tipologia di encapsulation da utilizzare per la vlan 10)
+- - ip address 192.168.1.1 255.255.255.192 (per specificare l'ip di questa sub interface)
+La medesima operazione è stata svolta per la creazione delle altre subinterfaces
+
+4 - Creazione dhcp pool
+- - ip dhcp pool Admin
+- - network 192.168.1.0 255.255.255.192
+- - default-router 192.168.1.1
+- - dns-server 192.168.1.1
+- - domain-name Admin.com
+La medesima operazione è stata svolta per la creazione degli altri dhcp pool
+
+3 - Configurazione AccessPoint
+- - SSID (Service Set Identifier)
+- - Authentication
+
+4 - Configurazione dispositivi wireless
+- - Identificativo Access Point
+- - Password

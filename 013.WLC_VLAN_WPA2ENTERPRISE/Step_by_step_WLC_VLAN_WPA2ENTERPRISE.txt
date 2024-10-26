@@ -1,0 +1,47 @@
+In questo progetto prendiamo in riferimento la topologia precedente ma aggiungiamo 
+l'autenticazione .x1 con server RADIUS.
+
+
+1) Colleghiamo il serve alla porta fa0/21 dello switch e abilitiamo il trunk
+Switch(config)#int fa0/21
+Switch(config-if)#sw
+Switch(config-if)#switchport mode trunk 
+Switch(config-if)#switchport trunk native vlan 99
+
+2) Al server radius impostiamo staticamente un ip in modo tale che rientri nella subnet associata alla vlan 99
+IPv4 Address: 172.16.99.250
+Subnet Mask: 255.255.255.0
+
+3)Configuriamo il server Radius
+Service: On
+Radius Port: 1812
+Client Name: WLC (Il nome del client che si collegherà al server RADIUS per autenticare gli utenti)
+Client IP: 172.16.99.254 (ip del WLC)
+Secret: Cisco123
+ServerType: Radius
+*Nel caso in cui non ci fosse un WLC ed i LAP, ma un Autonomous AP allora in "client IP" andrebbe l'ip dell'AP perché sarebbe lui l'intermediario.
+-
+User Setup
+user1-pass1
+user2-pass2
+user3-pass3
+user4-pass4
+
+3)Accediamo alla sezione SECURITY del WLC tramite web browser e configuriamo un RADIUS Authentication Server
+Server IP Address(Ipv4/Ipv6): 172.16.99.250
+Shared Secret: Cisco123
+
+4)Andiamo nella sezione WLANs e impostiamo l'utilizzo dell'autenticazione .1x per le WLAN-10/20
+WLANs > Security > Layer2 > disable PSK (config del progetto precedente), enable 802.1x
+WLANs > Security > AAA Servers > IP:172.16.99.250, Port:1812 (se configurato correttamente esce nel menu a tendina)
+
+5)Configurazione dei client wireless
+disable WPA2-PSK (config del progetto precedente), enable WPA2: user1/2/3/4, pass1/2/3/4
+
+
+
+
+
+
+
+

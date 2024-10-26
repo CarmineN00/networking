@@ -1,0 +1,42 @@
+Comandi utili:
+Switch#show etherchannel summary 
+10     Po10(RU)           -      Gig0/1(P) Gig0/2(D)
+Switch#show interfaces port-channel 10 
+
+Configurazione quasi identica al precendente progetto Routed_ports,
+ma in questo caso, per ottenere una soluzione con maggior fault tolerance,
+tra il L3 switch e il router si va a configurare un EtherChannel. L'obiettivo
+è quello di avere due interfacce fisiche differenti con lo stesso ip.
+
+* L'indirizzo ip va configurato esclusivamente nell'interfaccia Port-channel
+
+A partire dal progetto precedente i passi sono:
+Switch(config)#int g0/1
+Switch(config-if)#no switchport
+Switch(config-if)#no ip address 
+Switch(config-if)#int g0/2
+Switch(config-if)#no switchport
+Switch(config-if)#no ip address 
+IN QUESTO MODO ENTRAMBE LE INTERFACCE FISICHE CHE PARTECIPANO AL CHANNEL, 
+SONO ROUTED PORT E NON HANNO UN INDIRIZZO IP ASSEGNATO
+Switch(config)#int range g0/1 - g0/2
+Switch(config-if-range)#channel-group 10 mode on
+Switch(config)#interface port-channel 10
+Switch(config-if)#no switchport
+Switch(config-if)#ip address 10.1.30.1 255.255.255.0
+
+
+Router(config)#int port-channel 10
+Router(config-if)#ip address 10.1.30.2 255.255.255.0
+Router(config-if)#exit
+Router(config)#int range g0/1 - 2
+Router(config-if-range)#channel-group 10
+
+AGGIORNAMENTO DELLA ROUTE CHE ORA DEVE SFRUTTARE L'INTERFACCIA PORTCHANNEL10
+Router(config)#ip route 10.1.10.0 255.255.255.0 10.1.30.1
+Router(config)#ip route 10.1.20.0 255.255.255.0 10.1.30.1
+#LO SWITCH USATO NELLA CONFIGURAZIONE NON PERMETTE DI CONFIGURARE 
+IL PORTCHANNEL COME INTERFACCIA DI USCITA
+
+QUINDI LA SEGUENTE CONFIGURAZIONE FUNZIONA COME I PRECEDENTI DUE PROGETTI MA 
+VI E' LA SINERGIA DI L3 ETHERCHANNEL, ROUTED PORT E SVI

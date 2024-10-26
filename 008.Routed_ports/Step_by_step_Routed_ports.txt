@@ -1,0 +1,24 @@
+Comandi utili:
+Switch#show interfaces status
+Gig0/1                       connected    routed     auto    auto  10/100BaseTX
+Switch#show ip route
+     10.0.0.0/24 is subnetted, 3 subnets
+C       10.1.10.0 is directly connected, Vlan10
+C       10.1.20.0 is directly connected, Vlan20
+C       10.1.30.0 is directly connected, GigabitEthernet0/1 (si può notare che non è più presente Vlan30 come outgoing int, ma g0/1)
+
+
+Configurazione quasi identica al progetto SVI_Routing,
+ma in questo caso (scelta migliore), visto che tra 
+L3 switch e router vi è una connessione Point-to-Point
+viene utilizzata l'interfaccia g0/1 dello switch
+come routed port.
+
+Switch(config-if)#switchport access vlan 1 (assegno l'interfaccia g0/1 alla vlan 1)
+Switch(config)#no vlan 30 (elimino la vlan 30 non più necessaria)
+Switch(config)#no interface vlan 30 (elimino la SVI interface)
+Switch(config-if)#no switchport (trasformo l'interfaccia g0/1 in una routed port)
+Switch(config-if)#ip address 10.1.30.1 255.255.255.0 (assegno ip all'interfaccia configurata come routed)
+
+
+TUTTI COMUNICANO COME NEL PROGETTO PRECEDENTE, MA ORA CON L'UTILIZZO SIMULTANEO DI ROUTED E SVI

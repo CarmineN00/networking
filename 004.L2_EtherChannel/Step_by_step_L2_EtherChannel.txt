@@ -1,0 +1,31 @@
+1 - Configurazione base
+-SW1(config)#hostname SW1
+SW1(config)#no ip domain-lookup (per prevenire che lo switch provi a tradurre comandi incorretti)
+SW1(config)#service password-encryption (per cifrare le password in chiaro)
+Stesse configurazioni per SW2
+
+2 - Creazione VLAN
+SW1(config)#vlan 10
+SW1(config-vlan)#name Management
+SW1(config-vlan)#vlan 20
+SW1(config-vlan)#name Clients
+SW1(config-vlan)#vlan 999
+SW1(config-vlan)#name Parking_Lot
+SW1(config-vlan)#vlan 1000
+SW1(config-vlan)#name Native
+Stesse configurazioni per SW2
+
+3 - Assegnazione IP interfacce VLAN
+SW1(config)#interface vlan 10
+SW1(config-if)#ip address 192.168.10.11 255.255.255.0
+SW2(config)#interface vlan 10
+SW2(config-if)#ip address 192.168.10.12 255.255.255.0
+
+4 - Cambio native VLAN da 1 a 1000
+SW1(config)#interface range gig0/1 - 2
+SW1(config-if)#swiitchport trunk native vlan 1000
+Stesse configurazioni per SW2
+
+5 - Configurazione EtherChannel
+SW1(config)#int range gig0/1 - 2
+SW1(config-if-range)#channel-group 1 mode active

@@ -8,10 +8,12 @@ sia load balancing, vengono gestite.
 SW1(config)#int range fa0/1 - 2
 SW1(config-if-range)#switchport mode access 
 SW1(config-if-range)#switchport access vlan 10
+SW1(config)#vlan 20
 -
 SW2(config)#int range fa0/1 - 2
 SW2(config-if-range)#switchport mode access 
 SW2(config-if-range)#switchport access vlan 20
+SW2(config)#vlan 10
 
 2)Configurazione link tra switch in trunk mode
 SW1(config)#int g0/1

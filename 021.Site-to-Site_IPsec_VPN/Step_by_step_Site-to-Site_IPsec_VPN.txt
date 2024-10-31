@@ -1,0 +1,118 @@
+In questo progetto andiamo a configurare una VPN con IPSEC, quindi tutti i pacchetti che fluiranno tra le subnet
+192.168.10.0/24 e 192.168.20.0/24, saranno encapsulati e cifrati.
+1)Configurazione subnets
+SITE-A(config)#int g0/1
+SITE-A(config-if)#no sh
+SITE-A(config-if)#ip address 192.168.10.1 255.255.255.0
+SITE-A(config)#int g0/0
+SITE-A(config-if)#no sh
+SITE-A(config-if)#ip address 10.0.0.1 255.255.255.252
+-
+ISP(config)#int g0/0
+ISP(config-if)#no sh
+ISP(config-if)#ip address 10.0.0.1 255.255.255.252
+ISP(config-if)#int g0/2
+ISP(config-if)#no sh
+ISP(config-if)#ip address 20.0.0.1 255.255.255.252
+-
+SITE-B(config)#int g0/2
+SITE-B(config-if)#no sh
+SITE-B(config-if)#ip address 20.0.0.2 255.255.255.252
+SITE-B(config-if)#int g0/1
+SITE-B(config-if)#no sh
+SITE-B(config-if)#ip address 192.168.20.1 255.255.255.0
+
+2)Configurazione OSPF
+SITE-A(config)#router ospf 1
+SITE-A(config-router)#network 10.0.0.0 0.0.0.3 area 0
+SITE-A(config-router)#network 192.168.10.0 0.0.0.255 area 0
+-
+ISP(config)#router ospf 1
+ISP(config-router)#network 10.0.0.0 0.0.0.3 area 0
+ISP(config-router)#network 20.0.0.0 0.0.0.3 area 0
+-
+SITE-B(config)#router ospf 1
+SITE-B(config-router)#network 20.0.0.0 0.0.0.3 area 0
+SITE-B(config-router)#network 192.168.20.0 0.0.0.255 area 0
+
+3)Configurazione IPsec VPN
+Abilitazione security technology package:
+SITE-A(config)#license boot module c2900 technology-package securityk9 
+SITE-B(config)#license boot module c2900 technology-package securityk9 
+-
+Configurazione ACL estesa permettendo i pacchetti in uscita verso il target (si vuole individuare il traffico che deve passare nel tunnel)
+SITE-A(config)#access-list 100 permit ip 192.168.10.0 0.0.0.255 192.168.20.0 0.0.0.255
+SITE-B(config)#access-list 100 permit ip 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255
+-
+Configurazione Fase 1 Internet Key Exchange (ISAKMP policy)
+SITE-A(config)#crypto isakmp policy 10 // definiamo una policy
+SITE-A(config-isakmp)#encryption aes 256 // utilizziamo l'algoritmo di cifratura AES-256
+SITE-A(config-isakmp)#authentication pre-share // definiamo un metodo di autenticazione con chiave pre-condivisa
+SITE-A(config-isakmp)#group 5 // scegliamo un gruppo Diffie-Hellman
+SITE-A(config)#crypto isakmp key carmine address 20.0.0.2 // scegliamo la chiave precondivisa e specifichiamo l'ip target
+Facciamo lo stesso per l'altro router
+SITE-B(config)#crypto isakmp policy 10
+SITE-B(config-isakmp)#encryption aes 256
+SITE-B(config-isakmp)#authentication pre-share 
+SITE-B(config-isakmp)#group 5
+SITE-B(config)#crypto isakmp key carmine address 10.0.0.2
+-
+Configurazione Fase 2 IKE (IPsec policy)
+SITE-A(config)#crypto ipsec transform-set VPN-SET esp-aes esp-sha-hmac // un transform set specifica un algoritmo di cifratura ed uno di hashing
+SITE-A(config)#crypto map VPN-MAP 10 ipsec-isakmp // bind tra ipsec e isakmp
+SITE-A(config-crypto-map)#description THIS CONNECTS TO SITE B.
+SITE-A(config-crypto-map)#set peer 20.0.0.2 // definiamo il nodo col quale creare il tunnel
+SITE-A(config-crypto-map)#set transform-set VPN-SET // specifichiamo di utilizzare il transform-set definito in precedenza
+SITE-A(config-crypto-map)#match address 100 // utilizziamo l'ACL definita in precedenza
+Facciamo lo stesso per l'altro router
+SITE-B(config)#crypto ipsec transform-set VPN-SET esp-aes esp-sha-hmac 
+SITE-B(config)#crypto map VPN-MAP 10 ipsec-isakmp 
+SITE-B(config-crypto-map)#description THIS CONNECTS TO SITE A.
+SITE-B(config-crypto-map)#set peer 10.0.0.2
+SITE-B(config-crypto-map)#set transform-set VPN-SET
+SITE-B(config-crypto-map)#match address 100
+-
+Configurazione della crypto map sull'interfaccia di uscita
+SITE-A(config)#int g0/0
+SITE-A(config-if)#crypto map VPN-MAP
+SITE-B(config)#int g0/2
+SITE-B(config-if)#crypto map VPN-MAP
+
+PRE PING PC0 A PC2
+
+SITE-A#sh crypto ipsec sa 
+
+interface: GigabitEthernet0/0
+    Crypto map tag: VPN-MAP, local addr 10.0.0.2
+
+   protected vrf: (none)
+   local  ident (addr/mask/prot/port): (192.168.10.0/255.255.255.0/0/0)
+   remote  ident (addr/mask/prot/port): (192.168.20.0/255.255.255.0/0/0)
+   current_peer 20.0.0.2 port 500
+    PERMIT, flags={origin_is_acl,}
+   #pkts encaps: 0, #pkts encrypt: 0, #pkts digest: 0
+   #pkts decaps: 0, #pkts decrypt: 0, #pkts verify: 0
+   #pkts compressed: 0, #pkts decompressed: 0
+   #pkts not compressed: 0, #pkts compr. failed: 0
+   #pkts not decompressed: 0, #pkts decompress failed: 0
+   #send errors 0, #recv errors 0
+
+POST PING
+
+SITE-A#sh crypto ipsec sa 
+
+interface: GigabitEthernet0/0
+    Crypto map tag: VPN-MAP, local addr 10.0.0.2
+
+   protected vrf: (none)
+   local  ident (addr/mask/prot/port): (192.168.10.0/255.255.255.0/0/0)
+   remote  ident (addr/mask/prot/port): (192.168.20.0/255.255.255.0/0/0)
+   current_peer 20.0.0.2 port 500
+    PERMIT, flags={origin_is_acl,}
+   #pkts encaps: 7, #pkts encrypt: 7, #pkts digest: 0
+   #pkts decaps: 6, #pkts decrypt: 6, #pkts verify: 0
+   #pkts compressed: 0, #pkts decompressed: 0
+   #pkts not compressed: 0, #pkts compr. failed: 0
+   #pkts not decompressed: 0, #pkts decompress failed: 0
+   #send errors 1, #recv errors 0
+

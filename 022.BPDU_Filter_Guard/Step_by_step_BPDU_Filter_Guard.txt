@@ -1,0 +1,43 @@
+In questo progetto si vuole avere due differenti istanze STP, una per l'AS-A ed una per l'AS-B.
+In particolare si vuole che lo Switch0 sia Primary Root Bridge e Switch1 sia Secondary Root Bridge per AS-A,
+mentre Switch4 sia Primary Root Bridge e Switch5 sia Secondary Root Bridge per AS-B.
+
+
+Config AS-A:
+// Chi deve essere il Root Bridge viene stabilito in base alla priority, se la priority coincide allora si guarda il MAC.
+// L'importanza aumenta col decrescere della priority, o del MAC.
+Switch(config)#hostname Switch0
+Switch0(config)#spanning-tree vlan 1 root primary
+-
+Switch(config)#hostname Switch1
+Switch1(config)#spanning-tree vlan 1 root secondary
+---
+//Il portfast rende consapevole lo switch che su quella porta non ci sarà un dispositivo che potrà causare un loop,
+//dunque la porta sarà subito in forward state senza dover aspettare i 15 secondi di listening ed i 15 secondi di learning
+//(tempo che serve a popolare la CAM table). I 20 secondi di blocking non sono considerati siccome una porta libera appena
+//connessa non si può trovare nello stato di "bloccata".
+Switch1(config)#int fastEthernet 0/2
+Switch1(config-if)#spanning-tree portfast
+---
+//Il root guard è un meccanismo utile per evitare attacchi di tipo MITM "fisici". Noi vogliamo che Switch0 e Switch1 siano
+rispettivamente primary e secondary root bridge. Un attaccante può compromettere questa situazione impostando un valore di 
+priority inferiore sul proprio switch "malevolo", connesso a quelli "buoni".  Quello che possiamo fare è dire "su queste porte, non mi aspetto BPDU superiori".
+Switch0(config)#interface fastEthernet 0/2
+Switch0(config-if)#spanning-tree guard root
+-
+Switch1(config)#int fastEthernet 0/3
+Switch1(config-if)#spanning-tree guard root
+---
+//Il BPDU Filter fa si che una porta non possa inviare BPDU. Il BPDU guard fa si che una porta non possa ricevere BPDU se viene ricevuto la porta va in stato ERROR-DISABLE.
+//*1 Evito che messaggi BPDU, che sono inutili per un endpoint, vengano inviati.
+//*2 Faccio si che i messaggi BPDU dell'AS-A non vadano negli switch del AS-B (posso avere due root bridge)
+Switch1(config)#spanning-tree portfast bpdufilter default //su tutte le portfast non inviarà BPDU
+-
+Switch2(config)#int fastEthernet 0/1
+Switch2(config-if)#spanning-tree bpdufilter enable //abilito il filtro esclusivamente sulla porta che si connette allo switch dell'altro AS.
+
+Stesso setting di priority a Switch4 e Switch5 come per Switch0 e Switch1.
+
+
+
+
